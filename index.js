@@ -21,7 +21,6 @@ const filters = {
 }
 
 const renderTodos = function (todos, filters) {
-    // Part 1: Filtering todos based on search text and completion status
     const filteredTodos = todos.filter(function (todo) {
         const searchTextMatch = todo.text.toLowerCase().includes(filters.searchText.toLowerCase())
         const hideCompletedMatch = !filters.hideCompleted || !todo.completed
@@ -33,43 +32,46 @@ const renderTodos = function (todos, filters) {
         return !todo.completed
     })
 
-    document.querySelector('#todos').innerHTML = ''
+    // Clear previous content before rendering new todos
+    let todosDiv = document.querySelector('#todos')
+    todosDiv.innerHTML = ''
 
     const summary = document.createElement('h2')
     summary.textContent = `You have ${incompleteTodos.length} todos left`
-    document.querySelector('#todos').appendChild(summary)
+    todosDiv.appendChild(summary)
 
-    // Part 2: Creating checkbox inputs for todos and adding event listener
     filteredTodos.forEach(function (todo) {
-        const todoEl = document.createElement('div')
+        const todoDiv = document.createElement('div')
         const checkbox = document.createElement('input')
         checkbox.setAttribute('type', 'checkbox')
         checkbox.checked = todo.completed
-        todoEl.appendChild(checkbox)
-
         const todoText = document.createElement('span')
+        todoText.textContent = todo.text
         if (todo.completed) {
-            const strikeThrough = document.createElement('s')
-            strikeThrough.textContent = todo.text
-            todoText.appendChild(strikeThrough)
-        } else {
-            todoText.textContent = todo.text
+            todoText.style.textDecoration = 'line-through'
         }
-        todoEl.appendChild(todoText)
-
-        document.querySelector('#todos').appendChild(todoEl)
-
-        // Add event listener for checkbox
-        checkbox.addEventListener('change', function () {
-            todo.completed = !todo.completed
-            renderTodos(todos, filters)
-        })
+        todoDiv.appendChild(checkbox)
+        todoDiv.appendChild(todoText)
+        todosDiv.appendChild(todoDiv)
     })
 }
 
 renderTodos(todos, filters)
 
-// Event listeners for filtering and adding todos
+// Part 1
+document.querySelector('#new-todo').addEventListener('submit', function (e) {
+    e.preventDefault()
+
+    const input = e.target.elements.todoInput.value
+    todos.push({
+        text: input,
+        completed: false
+    })
+    renderTodos(todos, filters)
+
+    e.target.elements.todoInput.value = ''
+})
+
 document.querySelector('#search-text').addEventListener('input', function (e) {
     filters.searchText = e.target.value
     renderTodos(todos, filters)
@@ -80,15 +82,13 @@ document.querySelector('#hide-completed').addEventListener('change', function (e
     renderTodos(todos, filters)
 })
 
-document.querySelector('#new-todo').addEventListener('submit', function (e) {
-    e.preventDefault()
-    const text = e.target.elements[0].value.trim()
-    if (text.length > 0) {
-        todos.push({
-            text,
-            completed: false
-        })
+// Part 2
+const todosDiv = document.querySelector('#todos')
+todosDiv.addEventListener('change', function (e) {
+    if (e.target.tagName.toLowerCase() === 'input' && e.target.type === 'checkbox') {
+        const todoText = e.target.nextElementSibling.textContent.trim()
+        const todoIndex = todos.findIndex(todo => todo.text === todoText)
+        todos[todoIndex].completed = e.target.checked
         renderTodos(todos, filters)
-        e.target.elements[0].value = ''
     }
 })
